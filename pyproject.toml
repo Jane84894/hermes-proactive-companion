@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-proactive-companion"
+version = "0.1.0"
+description = "Self-hosted proactive companion components for Hermes Agent"
+requires-python = ">=3.11"
+dependencies = ["openai>=2.24,<3"]
+
+[project.scripts]
+hermes-companion = "hermes_companion.runtime:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hermes_companion = ["migrations/*.sql"]

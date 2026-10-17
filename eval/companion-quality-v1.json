@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "title": "Hermes Companion proactive-message quality set",
+  "language": "zh-CN",
+  "notes": [
+    "Synthetic fixtures only; no real user messages or personal data.",
+    "Deterministic expected decisions cover Social Engine gates and scoring.",
+    "Draft examples are editorial references, not exact-match targets.",
+    "Human review fields remain empty until a reviewer inspects generated drafts."
+  ],
+  "cases": [
+    {
+      "id": "A-event-care",
+      "category": "reasonable_concern",
+      "description": "Follow up on a user-mentioned exam after its expected end time.",
+      "draft_input": {
+        "candidate": "event_follow_up",
+        "grounding": [
+          "今天有考试",
+          "考试预计已结束"
+        ]
+      },
+      "reference_draft": "你今天的考试考得怎么样？",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "a",
+          "kind": "event_follow_up",
+          "title": "考试后跟进",
+          "reason": "用户提到今天有考试，预计时间已过",
+          "priority": 0.9,
+          "relevance": 0.9,
+          "timeliness": 0.9,
+          "novelty": 0.5,
+          "continuity": 0.9,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.1,
+          "repetition_penalty": 0.0
+        },
+        "context": {},
+        "expected": {
+          "selected": true,
+          "reason": "selected_highest_score"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "B-boring-greeting",
+      "category": "boring_greeting",
+      "description": "No meaningful context exists; an empty greeting should not trigger contact.",
+      "draft_input": {
+        "candidate": "light_chat",
+        "grounding": []
+      },
+      "reference_draft": "",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "b",
+          "kind": "light_chat",
+          "title": "普通问候",
+          "reason": "没有新的上下文",
+          "priority": 0.3,
+          "relevance": 0.2,
+          "timeliness": 0.2,
+          "novelty": 0.1,
+          "continuity": 0.1,
+          "relationship_fit": 0.5,
+          "interruption_cost": 0.7,
+          "repetition_penalty": 0.2
+        },
+        "context": {},
+        "expected": {
+          "selected": false,
+          "reason": "below_score_threshold"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "C-repeated-message",
+      "category": "repeated_message",
+      "description": "A recently used near-identical message receives a strong repetition penalty.",
+      "draft_input": {
+        "candidate": "topic_follow_up",
+        "grounding": [
+          "已讨论过的 ESP32 话题",
+          "近期发送过相似主动消息"
+        ]
+      },
+      "reference_draft": "",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "c",
+          "kind": "topic_follow_up",
+          "title": "重复的 ESP32 跟进",
+          "reason": "该话题最近已主动提起",
+          "priority": 0.8,
+          "relevance": 0.9,
+          "timeliness": 0.6,
+          "novelty": 0.2,
+          "continuity": 0.9,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.2,
+          "repetition_penalty": 0.9
+        },
+        "context": {},
+        "expected": {
+          "selected": false,
+          "reason": "below_score_threshold"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "D-busy-user",
+      "category": "inappropriate_interruption",
+      "description": "A low-urgency candidate is suppressed while the user has said they are busy.",
+      "draft_input": {
+        "candidate": "light_chat",
+        "grounding": [
+          "用户明确表示今天很忙"
+        ]
+      },
+      "reference_draft": "",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "d",
+          "kind": "light_chat",
+          "title": "轻松聊天",
+          "reason": "普通闲聊",
+          "priority": 0.8,
+          "relevance": 0.8,
+          "timeliness": 0.7,
+          "novelty": 0.6,
+          "continuity": 0.8,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.2,
+          "repetition_penalty": 0.0
+        },
+        "context": {
+          "busy_until": "2026-06-02T08:00:00+08:00"
+        },
+        "expected": {
+          "selected": false,
+          "reason": "user_busy"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "E-topic-continuation",
+      "category": "topic_continuation",
+      "description": "Continue a specific unresolved discussion using its known context.",
+      "draft_input": {
+        "candidate": "topic_follow_up",
+        "grounding": [
+          "ESP32 像素屏",
+          "GIF 帧缓存优化仍未解决"
+        ]
+      },
+      "reference_draft": "你之前那个像素屏 GIF 卡顿的问题，后来试过双缓冲吗？",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "e",
+          "kind": "topic_follow_up",
+          "title": "ESP32 像素屏优化",
+          "reason": "GIF 帧缓存问题仍未解决",
+          "priority": 0.8,
+          "relevance": 0.9,
+          "timeliness": 0.7,
+          "novelty": 0.7,
+          "continuity": 0.9,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.1,
+          "repetition_penalty": 0.0
+        },
+        "context": {},
+        "expected": {
+          "selected": true,
+          "reason": "selected_highest_score"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "F-verified-tech-discovery",
+      "category": "technical_discovery_share",
+      "description": "Share only a verified, relevant public discovery, with the source URL appended by the adapter.",
+      "draft_input": {
+        "candidate": "discovery_share",
+        "grounding": [
+          "已核验的公开仓库标题",
+          "来源 URL",
+          "用户的 ESP32 兴趣"
+        ]
+      },
+      "reference_draft": "看到一个和你 ESP32 项目相关的开源仓库，可能对图像缓存有参考。",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "f",
+          "kind": "discovery_share",
+          "title": "相关开源项目",
+          "reason": "核验过的公开仓库元数据，来源链接：https://example.org/project",
+          "priority": 0.7,
+          "relevance": 0.9,
+          "timeliness": 0.7,
+          "novelty": 0.9,
+          "continuity": 0.8,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.2,
+          "repetition_penalty": 0.0
+        },
+        "context": {
+          "technical_news_preferred": true
+        },
+        "expected": {
+          "selected": true,
+          "reason": "selected_highest_score"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "G-long-no-reply",
+      "category": "long_no_reply",
+      "description": "After two ignored proactive messages, suppress low-priority social chat.",
+      "draft_input": {
+        "candidate": "light_chat",
+        "grounding": [
+          "用户近期没有回复主动消息"
+        ]
+      },
+      "reference_draft": "",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "g",
+          "kind": "light_chat",
+          "title": "普通聊天",
+          "reason": "没有紧急或具体话题",
+          "priority": 0.7,
+          "relevance": 0.7,
+          "timeliness": 0.6,
+          "novelty": 0.5,
+          "continuity": 0.6,
+          "relationship_fit": 0.8,
+          "interruption_cost": 0.2,
+          "repetition_penalty": 0.0
+        },
+        "context": {
+          "consecutive_ignored": 2
+        },
+        "expected": {
+          "selected": false,
+          "reason": "no_eligible_candidates",
+          "candidate_reason": "ignored_streak_pause"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    },
+    {
+      "id": "H-explicit-stop",
+      "category": "explicit_stop",
+      "description": "An explicit request to stop proactive contact blocks every candidate.",
+      "draft_input": {
+        "candidate": "event_follow_up",
+        "grounding": [
+          "用户明确要求暂停主动联系"
+        ]
+      },
+      "reference_draft": "",
+      "evaluation": {
+        "now": "2026-06-01T18:30:00+08:00",
+        "candidate": {
+          "id": "h",
+          "kind": "event_follow_up",
+          "title": "事件跟进",
+          "reason": "存在待跟进事件",
+          "priority": 1.0,
+          "relevance": 1.0,
+          "timeliness": 1.0,
+          "novelty": 1.0,
+          "continuity": 1.0,
+          "relationship_fit": 1.0,
+          "interruption_cost": 0.0,
+          "repetition_penalty": 0.0
+        },
+        "context": {
+          "paused": true
+        },
+        "expected": {
+          "selected": false,
+          "reason": "user_paused"
+        }
+      },
+      "human_review": {
+        "reviewer": "",
+        "naturalness_1_to_5": null,
+        "grounding_1_to_5": null,
+        "pressure_1_to_5": null,
+        "pass": null,
+        "notes": ""
+      }
+    }
+  ]
+}

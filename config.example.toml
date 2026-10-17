@@ -1,0 +1,43 @@
+[companion]
+enabled = true
+mode = "shadow" # use "live" only when autonomous sending is intended
+outbound_delivery_enabled = false # live mode requires true and auto-sends selected drafts
+timezone = "Asia/Shanghai"
+persona_profile = "./persona.toml"
+
+[paths]
+hermes_state_db = "~/.hermes/state.db"
+hermes_env_file = "~/.hermes/.env"
+hermes_cli = "~/.hermes/hermes-agent/.venv/bin/hermes"
+companion_db = "~/.hermes/companion/data/companion.sqlite3"
+
+[social]
+quiet_hours_start = "23:30"
+quiet_hours_end = "08:30"
+max_daily_proactive_messages = 8
+min_message_interval_minutes = 45
+post_reply_cooldown_minutes = 30
+light_chat_after_hours = 6
+evaluation_interval_minutes = 30
+discovery_interval_hours = 24
+
+[discovery]
+enabled = false # enable only after reviewing source and network policy
+github_enabled = true
+rss_feeds = []
+
+[thoughts]
+max_queue_length = 100
+max_tasks_per_day = 20
+max_attempts = 3
+
+[memory]
+enabled = true
+retention_days = 0 # 0 means retain until corrected or explicitly deleted
+
+[budget]
+daily_token_budget = 600000 # monthly_cost_budget_usd remains the hard estimated-spend cap
+monthly_cost_budget_usd = 10.0
+
+[logging]
+level = "INFO"

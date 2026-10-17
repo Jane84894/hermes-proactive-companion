@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Hermes Proactive Companion backup
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=hermes-companion-backup.service
+
+[Install]
+WantedBy=timers.target

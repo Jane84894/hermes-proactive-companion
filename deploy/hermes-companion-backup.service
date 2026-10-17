@@ -1,0 +1,14 @@
+[Unit]
+Description=Back up Hermes Proactive Companion SQLite data
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/hermes-proactive-companion
+Environment=PYTHONPATH=%h/hermes-proactive-companion/src
+ExecStart=%h/.hermes/hermes-agent/.venv/bin/python -m hermes_companion.backup
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.hermes/companion
+PrivateTmp=true
