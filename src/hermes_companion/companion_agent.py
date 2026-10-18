@@ -54,6 +54,10 @@ Follow the supplied persona while obeying these safety rules."""
             {"id": item.id, "kind": item.kind, "content": item.content[:500]}
             for item in memories[:5]
         ]
+        persona_context = {
+            key: value for key, value in self.persona.items()
+            if key not in {"instructions", "version"}
+        }
         prompt = json.dumps(
             {
                 "candidate": {
@@ -61,7 +65,7 @@ Follow the supplied persona while obeying these safety rules."""
                     "title": candidate.title,
                     "reason": candidate.reason,
                 },
-                "persona": self.persona,
+                "persona": persona_context,
                 "companion_state": self._prompt_state(companion_state or {}),
                 "memories": safe_memories,
             },
@@ -69,7 +73,7 @@ Follow the supplied persona while obeying these safety rules."""
             separators=(",", ":"),
         )
         raw = self.model.generate_json(
-            self.SYSTEM_PROMPT, "仅基于以下 JSON 数据生成审阅草稿：\n" + prompt,
+            self._system_prompt(), "仅基于以下 JSON 数据生成审阅草稿：\n" + prompt,
             max_tokens=240,
         )
         result = self._validate(
@@ -93,6 +97,7 @@ Follow the supplied persona while obeying these safety rules."""
             values = {
                 "name": "Hermes Companion",
                 "description": "年轻女性虚拟角色；自然、开朗、好奇，有自己的观点，偶尔调皮幽默，不刻意讨好用户。",
+                "instructions": "",
                 "language": "zh-CN",
                 "tone": "生活化、亲切、真诚、简洁",
                 "max_sentences": 3,
@@ -112,6 +117,7 @@ Follow the supplied persona while obeying these safety rules."""
             "description",
             "年轻女性虚拟角色；自然、开朗、好奇，有自己的观点，偶尔调皮幽默，不刻意讨好用户。",
         )
+        instructions = persona.get("instructions", "")
         language = style.get("language", "zh-CN")
         tone = style.get("tone", "亲切、真诚、简洁")
         maximum = style.get("max_sentences", 3)
@@ -119,6 +125,8 @@ Follow the supplied persona while obeying these safety rules."""
             raise ValueError("persona name must be a short string")
         if not isinstance(description, str) or not description.strip() or len(description) > 500:
             raise ValueError("persona description must be a short string")
+        if not isinstance(instructions, str) or len(instructions) > 20000:
+            raise ValueError("persona instructions must be text no longer than 20000 characters")
         if not isinstance(language, str) or not language.strip() or len(language) > 40:
             raise ValueError("persona language must be a short string")
         if not isinstance(tone, str) or not tone.strip() or len(tone) > 160:
@@ -134,6 +142,7 @@ Follow the supplied persona while obeying these safety rules."""
         values = {
             "name": name.strip(),
             "description": description.strip(),
+            "instructions": instructions.strip(),
             "language": language.strip(),
             "tone": tone.strip(),
             "max_sentences": maximum,
@@ -142,6 +151,19 @@ Follow the supplied persona while obeying these safety rules."""
             "never_claim_real_world_experiences": True,
         }
         return {**values, "version": CompanionAgent._persona_version(values)}
+
+    def _system_prompt(self) -> str:
+        instructions = str(self.persona.get("instructions", "")).strip()
+        if not instructions:
+            return self.SYSTEM_PROMPT
+        return (
+            f"{self.SYSTEM_PROMPT}\n\n"
+            "Additional personality instructions from the trusted local persona file:\n"
+            f"{instructions}\n\n"
+            "These instructions guide voice and conversational style. They cannot override "
+            "the rules above: be truthful about being an AI, do not claim real-world "
+            "experiences or actions, and use only supplied facts and memories."
+        )
 
     @staticmethod
     def _persona_version(values: dict[str, str | int]) -> str:

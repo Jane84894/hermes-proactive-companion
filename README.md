@@ -36,6 +36,7 @@ The example configuration uses `mode = "shadow"` and `outbound_delivery_enabled 
    ```
 
 4. Review the paths in `~/.hermes/companion/config.toml`. By default, the service reads `~/.hermes/state.db`, `~/.hermes/.env`, and Hermes' installed CLI. The `.env` file must contain the model provider credentials expected by your Hermes setup.
+   For a long companion style prompt, set `[persona].instructions` in `persona.toml` to a TOML multiline string (up to 20,000 characters). It is injected as trusted local style guidance while the companion's truthfulness and grounding rules remain in force.
 5. Check the configuration and database, then run the test suite:
 
    ```sh
