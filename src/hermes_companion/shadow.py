@@ -288,30 +288,29 @@ class ShadowDecisionRunner:
                 earliest_send_at=last_active + timedelta(minutes=self.interval_minutes),
                 expires_at=last_active + timedelta(days=14),
             ))
-        if not result:
-            last_activity_row = db.execute(
-                "SELECT MAX(event_timestamp) FROM event_outbox "
-                "WHERE event_type='USER_MESSAGE_RECEIVED'"
+        last_activity_row = db.execute(
+            "SELECT MAX(event_timestamp) FROM event_outbox "
+            "WHERE event_type='USER_MESSAGE_RECEIVED'"
+        ).fetchone()
+        if last_activity_row and last_activity_row[0]:
+            last_activity = self._timestamp(last_activity_row[0])
+            light_chat_id = f"light-chat:{now.date().isoformat()}"
+            recent_light_chat = db.execute(
+                "SELECT 1 FROM social_decisions WHERE candidate_kind='light_chat' "
+                "AND selected=1 AND evaluated_at>=? LIMIT 1",
+                ((now - timedelta(days=1)).isoformat(),),
             ).fetchone()
-            if last_activity_row and last_activity_row[0]:
-                last_activity = self._timestamp(last_activity_row[0])
-                light_chat_id = f"light-chat:{now.date().isoformat()}"
-                recent_light_chat = db.execute(
-                    "SELECT 1 FROM social_decisions WHERE candidate_kind='light_chat' "
-                    "AND selected=1 AND evaluated_at>=? LIMIT 1",
-                    ((now - timedelta(days=7)).isoformat(),),
-                ).fetchone()
-                earliest = last_activity + timedelta(hours=self.policy.light_chat_after_hours)
-                if (earliest <= now and earliest + timedelta(days=14) > now
-                        and recent_light_chat is None and self._candidate_retryable(light_chat_id, now)):
-                    result.append(SocialCandidate(
-                        id=light_chat_id, kind="light_chat", title="轻松聊聊",
-                        reason="低频轻量问候候选；最近没有开放事件或话题",
-                        priority=0.55, relevance=0.7, timeliness=0.6, novelty=0.8,
-                        continuity=0.3, relationship_fit=0.75, interruption_cost=0.3,
-                        repetition_penalty=0.0, earliest_send_at=earliest,
-                        expires_at=earliest + timedelta(days=14),
-                    ))
+            earliest = last_activity + timedelta(hours=self.policy.light_chat_after_hours)
+            if (earliest <= now and earliest + timedelta(days=14) > now
+                    and recent_light_chat is None and self._candidate_retryable(light_chat_id, now)):
+                result.append(SocialCandidate(
+                    id=light_chat_id, kind="light_chat", title="轻松聊聊",
+                    reason="闲置时间已到，加入轻聊天候选",
+                    priority=0.55, relevance=0.7, timeliness=0.6, novelty=0.8,
+                    continuity=0.3, relationship_fit=0.75, interruption_cost=0.3,
+                    repetition_penalty=0.0, earliest_send_at=earliest,
+                    expires_at=earliest + timedelta(days=14),
+                ))
         return self._enqueue_candidates(result, now)
 
     def _enqueue_candidates(

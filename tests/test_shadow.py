@@ -162,6 +162,59 @@ class ShadowDecisionTests(unittest.TestCase):
             self.assertEqual(len(later), 1)
             self.assertEqual(later[0].kind, "light_chat")
 
+    def test_idle_light_chat_competes_with_low_scoring_topic_candidates(self):
+        zone = ZoneInfo("Asia/Shanghai")
+        now = datetime(2026, 10, 18, 15, 0, tzinfo=zone)
+        with tempfile.TemporaryDirectory() as tmp, EventStore(
+            Path(tmp) / "companion.sqlite3"
+        ) as store:
+            store.publish(CompanionEvent(
+                event_type="USER_MESSAGE_RECEIVED", user_id="primary-user",
+                timestamp=now - timedelta(hours=7), source="test", payload={"text": "你好"},
+            ))
+            db = store._db
+            db.execute("INSERT INTO users(id) VALUES ('primary-user')")
+            db.execute(
+                "INSERT INTO topics (id, user_id, title, interest_score, last_active_at) "
+                "VALUES ('topic-low-score', 'primary-user', '一个开放话题', 0.85, ?)",
+                ((now - timedelta(hours=2)).isoformat(),),
+            )
+            db.commit()
+            runner = ShadowDecisionRunner(
+                store, SocialPolicy(timezone="Asia/Shanghai", light_chat_after_hours=6),
+                interval_minutes=30,
+            )
+
+            report = runner.evaluate(now=now)
+
+            self.assertEqual(report["selected_candidate"], "light-chat:2026-10-18")
+
+    def test_light_chat_can_be_selected_again_after_one_day(self):
+        zone = ZoneInfo("Asia/Shanghai")
+        first_time = datetime(2026, 10, 17, 15, 0, tzinfo=zone)
+        later_time = first_time + timedelta(hours=25)
+        with tempfile.TemporaryDirectory() as tmp, EventStore(
+            Path(tmp) / "companion.sqlite3"
+        ) as store:
+            store.publish(CompanionEvent(
+                event_type="USER_MESSAGE_RECEIVED", user_id="primary-user",
+                timestamp=first_time - timedelta(hours=7), source="test", payload={"text": "你好"},
+            ))
+            runner = ShadowDecisionRunner(
+                store, SocialPolicy(timezone="Asia/Shanghai", light_chat_after_hours=6),
+                interval_minutes=30,
+            )
+            first = runner.evaluate(now=first_time)
+            self.assertEqual(first["selected_candidate"], "light-chat:2026-10-17")
+
+            store.publish(CompanionEvent(
+                event_type="USER_MESSAGE_RECEIVED", user_id="primary-user",
+                timestamp=later_time - timedelta(hours=7), source="test", payload={"text": "继续"},
+            ))
+            candidates = runner._candidates(later_time)
+
+            self.assertTrue(any(item.kind == "light_chat" for item in candidates))
+
     def test_selected_candidate_gets_reviewable_draft(self):
         class FakeAgent:
             def generate(self, candidate, memories, companion_state=None):
